@@ -165,15 +165,15 @@ static SWFError parse_JPEG_tables(SWFParser *parser, SWFTag *tag){
 }
 
 static SWFError parse_payload(SWFParser *parser, SWFTag *tag){
-    if(!tag->len){
+    if(!tag->size){
         // Short-circuit if the tag was just an ID (probably invalid)
         return SWF_OK;
     }
-    tag->buffer = malloc(tag->len);
-    if(!tag->buffer)
+    tag->payload = malloc(tag->size);
+    if(!tag->payload)
         return SWF_NOMEM;
-    memcpy(tag->payload, parser->buf, tag->len);
-    advance_buf(parser, tag->len);
+    memcpy(tag->payload, parser->buf, tag->size);
+    advance_buf(parser, tag->size);
     return SWF_OK;
 }
 
@@ -181,12 +181,12 @@ static SWFError parse_id_payload(SWFParser *parser, SWFTag *tag){
     // This function handles types that start with a 2-byte ID, then have
     // some complex payload that isn't worth parsing right now.
     tag->id = get_16(parser);
-    tag->len -= 2;
+    tag->size -= 2;
     return parse_payload(parser, tag);
 }
 
 static SWFError parse_swf_tag(SWFParser *parser){
-    swf->last_advance = 0;
+    parser->last_advance = 0;
     SWF *swf = parser->swf;
     if(parser->buf_size < 2)
         return SWF_NEED_MORE_DATA;
@@ -219,11 +219,11 @@ static SWFError parse_swf_tag(SWFParser *parser){
         }
         break;
     case SWF_DEFINE_BITS:
-    case SWF_DEFINE_BITS_JPEG2:
-    case SWF_DEFINE_BITS_JPEG3:
-    case SWF_DEFINE_BITS_JPEG4:
+    case SWF_DEFINE_BITS_JPEG_2:
+    case SWF_DEFINE_BITS_JPEG_3:
+    case SWF_DEFINE_BITS_JPEG_4:
     case SWF_DEFINE_BITS_LOSSLESS:
-    case SWF_DEFINE_BITS_LOSSLESS2:
+    case SWF_DEFINE_BITS_LOSSLESS_2:
         if((ret = parse_id_payload(parser, &tag))){
             rollback_buf(parser);
             return ret;
